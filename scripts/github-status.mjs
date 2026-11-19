@@ -3,6 +3,10 @@ import { execFileSync } from "node:child_process";
 try {
   const token = process.env.GITHUB_STATUS_TOKEN;
   if (!token) throw new Error("Falta la credencial github-commit-status.");
+  const repository = process.env.GITHUB_REPOSITORY || "j4vin/Proyecto_pds";
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
+    throw new Error("Repositorio GitHub no valido.");
+  }
 
   const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   if (!/^[0-9a-f]{40,64}$/.test(sha)) throw new Error("Commit no valido.");
@@ -24,7 +28,7 @@ try {
   }
 
   const response = await fetch(
-    "https://api.github.com/repos/EstebanBecerraC/Proyecto_pds/statuses/" + sha,
+    "https://api.github.com/repos/" + repository + "/statuses/" + sha,
     {
       method: "POST",
       headers: {
@@ -50,7 +54,8 @@ try {
   const safe = error.message;
   console.error(
     safe.startsWith("GitHub respondio") || safe.startsWith("Falta ") ||
-    safe.startsWith("Commit ") || safe.startsWith("Resultado ") || safe.startsWith("BUILD_URL ")
+    safe.startsWith("Commit ") || safe.startsWith("Repositorio ") ||
+    safe.startsWith("Resultado ") || safe.startsWith("BUILD_URL ")
       ? safe
       : "No se pudo publicar el estado en GitHub; revisar conexion y checkout.",
   );
