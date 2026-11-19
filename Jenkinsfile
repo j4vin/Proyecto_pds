@@ -13,6 +13,11 @@ pipeline {
         githubPush()
     }
 
+    environment {
+        BASE_URL = 'http://localhost:5173'
+        GITHUB_REPOSITORY = 'j4vin/Proyecto_pds'
+    }
+
     stages {
         stage('Obtener codigo') {
             steps {
@@ -23,9 +28,12 @@ pipeline {
         }
         stage('Estado pendiente en GitHub') {
             steps {
-                withCredentials([string(credentialsId: 'github-commit-status', variable: 'GITHUB_STATUS_TOKEN')]) {
-                    withEnv(['CI_RESULT=PENDING']) {
-                        sh 'node scripts/github-status.mjs'
+                // GitHub es informativo: un problema de permisos no debe impedir las pruebas.
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withCredentials([string(credentialsId: 'github-commit-status', variable: 'GITHUB_STATUS_TOKEN')]) {
+                        withEnv(['CI_RESULT=PENDING']) {
+                            sh 'node scripts/github-status.mjs'
+                        }
                     }
                 }
             }
@@ -73,7 +81,7 @@ pipeline {
         cleanup {
             script {
                 // Publicar el resultado del commit exacto obtenido por checkout scm.
-                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     withCredentials([string(credentialsId: 'github-commit-status', variable: 'GITHUB_STATUS_TOKEN')]) {
                         withEnv(["CI_RESULT=${currentBuild.currentResult}"]) {
                             sh 'node scripts/github-status.mjs'
@@ -85,6 +93,14 @@ pipeline {
                     withCredentials([string(credentialsId: 'discord-webhook', variable: 'DISCORD_WEBHOOK')]) {
                         withEnv(["CI_RESULT=${currentBuild.currentResult}"]) {
                             sh 'node scripts/notify-discord.mjs'
+                        }
+                    }
+                }
+                // Slack es el canal obligatorio de notificaciones de Entrega 3.
+                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
+                        withEnv(["CI_RESULT=${currentBuild.currentResult}"]) {
+                            sh 'node scripts/notify-slack.mjs'
                         }
                     }
                 }
