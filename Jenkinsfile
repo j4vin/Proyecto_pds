@@ -13,6 +13,10 @@ pipeline {
         githubPush()
     }
 
+    environment {
+        BASE_URL = 'http://localhost:5173'
+    }
+
     stages {
         stage('Obtener codigo') {
             steps {
@@ -85,6 +89,14 @@ pipeline {
                     withCredentials([string(credentialsId: 'discord-webhook', variable: 'DISCORD_WEBHOOK')]) {
                         withEnv(["CI_RESULT=${currentBuild.currentResult}"]) {
                             sh 'node scripts/notify-discord.mjs'
+                        }
+                    }
+                }
+                // Slack es el canal obligatorio de notificaciones de Entrega 3.
+                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
+                        withEnv(["CI_RESULT=${currentBuild.currentResult}"]) {
+                            sh 'node scripts/notify-slack.mjs'
                         }
                     }
                 }

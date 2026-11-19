@@ -5,6 +5,13 @@ mkdir -p reports
 test_dir=$(mktemp -d)
 api_pid=""
 web_pid=""
+base_url="${BASE_URL:-http://localhost:5173}"
+base_url="${base_url%/}"
+
+if [[ ! "$base_url" =~ ^https?://[^/]+$ ]]; then
+    echo "BASE_URL debe contener solo el origen, por ejemplo http://localhost:5173."
+    exit 1
+fi
 
 cleanup() {
     for pid in "$web_pid" "$api_pid"; do
@@ -20,7 +27,8 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # API y frontend compilado comparten origen mediante el proxy de Vite.
-DATABASE_PATH="$test_dir/e2e.sqlite" APP_ORIGIN=http://localhost:5173 PORT=3000     bun server/index.js > reports/api.log 2>&1 &
+DATABASE_PATH="$test_dir/e2e.sqlite" APP_ORIGIN="$base_url" PORT=3000 \
+    bun server/index.js > reports/api.log 2>&1 &
 api_pid=$!
 bun run preview > reports/frontend.log 2>&1 &
 web_pid=$!
@@ -33,8 +41,9 @@ for ((attempt=1; attempt<=60; attempt++)); do
         exit 1
     fi
     # Sin sesion, /api/auth/me debe responder 401, tambien a traves del proxy.
-    status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2         http://localhost:5173/api/auth/me || true)
-    if [ "$status" = 401 ] && curl -fsS --max-time 2 http://localhost:5173/ > /dev/null; then
+    status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+        "$base_url/api/auth/me" || true)
+    if [ "$status" = 401 ] && curl -fsS --max-time 2 "$base_url/" > /dev/null; then
         ready=true
         break
     fi
@@ -47,4 +56,7 @@ if [ "$ready" != true ]; then
     exit 1
 fi
 
-bunx --no-install cypress run --browser electron     --config video=true     --reporter junit     --reporter-options 'mochaFile=reports/cypress-[hash].xml,toConsole=true'
+BASE_URL="$base_url" bunx --no-install cypress run --browser electron \
+    --config video=true \
+    --reporter junit \
+    --reporter-options 'mochaFile=reports/cypress-[hash].xml,toConsole=true'
