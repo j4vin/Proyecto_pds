@@ -15,6 +15,7 @@ pipeline {
 
     environment {
         BASE_URL = 'http://localhost:5173'
+        GITHUB_REPOSITORY = 'j4vin/Proyecto_pds'
     }
 
     stages {
