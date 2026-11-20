@@ -98,7 +98,7 @@ El proyecto está pensado para funcionar en cualquier sistema operativo compatib
 
 Clona el repositorio de CrowdStarter:
 
-- git clone https://github.com/EstebanBecerraC/Proyecto_pds.git
+- git clone https://github.com/j4vin/Proyecto_pds.git
 
 
 Ingresa al directorio del proyecto:
@@ -208,17 +208,16 @@ Las campañas canceladas dejan de ser visibles para otros usuarios, también en 
 
 ## Integrantes
 
-- Esteban Becerra
 - Javiera Cortés
 - Beatriz Vázquez
 
 ## Enlaces
 
-- [Repositorio](https://github.com/EstebanBecerraC/Proyecto_pds)
+- [Repositorio](https://github.com/j4vin/Proyecto_pds)
 - [Video existente](https://youtu.be/O6EkOwl1mQY)
 - [Cápsula de entrega 2](https://youtu.be/Fn5n3GNrePk)
-- [Wiki](https://github.com/EstebanBecerraC/Proyecto_pds/wiki)
-- [Releases](https://github.com/EstebanBecerraC/Proyecto_pds/releases)
+- [Wiki](https://github.com/j4vin/Proyecto_pds/wiki)
+- [Releases](https://github.com/j4vin/Proyecto_pds/releases)
 
 ## Integración continua — Entrega 2
 
