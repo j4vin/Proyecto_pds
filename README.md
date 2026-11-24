@@ -98,19 +98,23 @@ El proyecto está pensado para funcionar en cualquier sistema operativo compatib
 
 Clona el repositorio de CrowdStarter:
 
-- git clone https://github.com/j4vin/Proyecto_pds.git
-
+```bash
+git clone https://github.com/j4vin/Proyecto_pds.git
+```
 
 Ingresa al directorio del proyecto:
 
-- cd .\Proyecto_pds\
-
+```bash
+cd Proyecto_pds
+```
 
 ### 6.2. Instalar dependencias
 
 Ejecuta:
 
-- bun install
+```bash
+bun install
+```
 
 ## 7. Ejecución
 
@@ -118,13 +122,17 @@ CrowdStarter requiere ejecutar el servidor de la API y el servidor de desarrollo
 
 ### 7.1. Ejecutar la API
 
-- bun run dev:server
+```bash
+bun run dev:server
+```
 
 ### 7.2. Ejecutar el frontend
 
 En otra terminal:
 
-- bun run dev
+```bash
+bun run dev
+```
 
 
 ### 7.3. URLs de desarrollo
@@ -140,19 +148,69 @@ Una vez iniciados ambos servicios:
 
 Para ejecutar las pruebas unitarias:
 
-- bun test
+```bash
+bun test
+```
 
 
 ### 8.2. Tests end-to-end
 
-El proyecto utiliza Cypress para realizar pruebas end-to-end. Con API y frontend disponibles, ejecutar `bun run test:e2e`. Para usar una base separada y el frontend compilado, seguir [E2E local con base temporal](docs/CI-CD.md#ejecución-e2e-local-con-base-temporal).
+El proyecto utiliza Cypress para validar los flujos críticos desde la perspectiva del usuario.
+
+Cypress obtiene la dirección de la aplicación mediante la variable de entorno `BASE_URL`. Si no se configura, utiliza `http://localhost:5173` de forma predeterminada.
+
+Con la API y el frontend ejecutándose localmente, ejecuta toda la suite en modo headless:
+
+```bash
+bun run test:e2e
+```
+
+El comando equivalente, usando directamente el ejecutable local de Cypress, es:
+
+```bash
+bunx --no-install cypress run
+```
+
+Para seleccionar pruebas y depurarlas mediante la interfaz de Cypress, utiliza uno de estos comandos equivalentes:
+
+```bash
+bun run test:e2e:open
+# o bien
+bunx --no-install cypress open
+```
+
+Los modos `run` y `open` son alternativas: no es necesario ejecutarlos consecutivamente. `--no-install` evita descargas implícitas y requiere haber ejecutado previamente `bun install`.
+
+Para utilizar otra dirección en Linux o macOS:
+
+```bash
+BASE_URL=http://servidor:puerto bun run test:e2e
+```
+
+En PowerShell:
+
+```powershell
+$env:BASE_URL = "http://servidor:puerto"
+bun run test:e2e
+```
+
+Para reproducir localmente el flujo utilizado por Jenkins, con una base SQLite temporal:
+
+```bash
+bun run build
+BASE_URL=http://localhost:5173 bash scripts/ci-e2e.sh
+```
+
+Este script requiere Bash y `curl`, además de los puertos 3000 y 5173 disponibles. En Windows debe ejecutarse desde WSL o un entorno Bash compatible. El script levanta la API y el frontend compilado, espera que ambos servicios estén disponibles, ejecuta Cypress en modo headless y genera reportes JUnit, logs y videos. Las capturas se generan automáticamente cuando falla una prueba.
 
 
 ### 8.3. Build
 
 Para generar el build de producción:
 
-- bun run build
+```bash
+bun run build
+```
 
 
 ## 9. Uso básico
@@ -219,16 +277,28 @@ Las campañas canceladas dejan de ser visibles para otros usuarios, también en 
 - [Wiki](https://github.com/j4vin/Proyecto_pds/wiki)
 - [Releases](https://github.com/j4vin/Proyecto_pds/releases)
 
-## Integración continua — Entrega 2
+## Integración continua — Entrega 3
 
-El pipeline de Jenkins ejecuta las pruebas Bun, compila el frontend y ejecuta
-Cypress con una base SQLite temporal. Publica reportes y artefactos, actualiza
-el estado del commit en GitHub y envía notificaciones a Discord.
+El pipeline de Jenkins automatiza la validación completa del proyecto ante cambios en el repositorio.
 
-- [Configuración y operación de CI/CD](docs/CI-CD.md)
+Cada ejecución realiza las siguientes etapas:
+
+1. Obtiene y limpia el código del repositorio.
+2. Instala las dependencias.
+3. Ejecuta 137 pruebas Bun.
+4. Compila el frontend.
+5. Levanta la API y el frontend utilizando una base SQLite temporal.
+6. Ejecuta 24 escenarios Cypress distribuidos en 5 especificaciones.
+7. Publica reportes JUnit y conserva logs, videos y capturas ante fallos.
+8. Notifica mediante Slack si el pipeline finaliza correctamente o falla.
+
+La dirección utilizada por Cypress no está fijada en las pruebas: se proporciona mediante `BASE_URL`. En Jenkins se utiliza `http://localhost:5173`, pero puede reemplazarse para ejecutar la suite contra otro entorno.
+
+El pipeline marca la ejecución como fallida cuando una prueba Bun, la compilación o una prueba E2E no se completa correctamente.
+
+- [Configuración base de CI/CD de la Entrega 2](docs/CI-CD.md)
+- [Documentación y evidencias de la Entrega 3](https://github.com/j4vin/Proyecto_pds/wiki/Entrega-3)
 - [Jenkins](https://crowdstarter-jenkins.duckdns.org/) (requiere autenticación)
-
-La tarea de Jenkins sigue `develop`: los merges y pushes a esa rama pueden iniciar Jenkins automáticamente. Como ejemplo: La validación local de HU10 obtuvo **137 pruebas Bun y 14 escenarios Cypress aprobados**, además del build. 
 
 - [Documento principal de entrega 2 y arquitectura](docs/ENTREGA-2.md)
 - [Índice de evidencias](docs/evidencias/entrega-2/README.md)
